@@ -17,16 +17,17 @@ exports.generateModelData = async (studentNumber) => {
             data: {
                 date_time,
                 studentNumber,
-                clNum
+                clNum,
+                randomNumber
             }
         });
 
-        logger.info(`Generated and added new data: ${newData.clNum}`);
+        logger.info(`Сгенерированы и добавлены новые данные: ${newData.clNum}`);
 
         return newData;
     } catch (error) {
         // Обработка ошибок при вставке данных
-        logger.error('Error generating model data:', error);
+        logger.error('Ошибка создания данных модели:', error);
         throw error;
     }
 };

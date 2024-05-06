@@ -1,3 +1,5 @@
+const databaseService = require('./databaseService');
+
 // Пример сервиса репликации
 exports.pushReplication = async () => {
     try {
@@ -5,18 +7,18 @@ exports.pushReplication = async () => {
         for (const server of Object.values(config)) {
             // Пропускаем центральный сервер
             if (server.STUDENT_NUMBER !== 0) { 
+                // Ищем записи, где studentNumber равен STUDENT_NUMBER локального сервера
                 const allTelemetryData = await Cl1.findMany({
                     where: {
-                        // Ищем записи, где studentNumber равен STUDENT_NUMBER локального сервера
                         studentNumber: server.STUDENT_NUMBER 
                     }
                 });
                 const response = await axios.post(`${server.ADDRESS}/replicate`, allTelemetryData);
-                console.log(`Data replicated to local server ${server.PORT}:`, response.data);
+                console.log(`Данные реплицируются на локальный сервер ${server.PORT}:`, response.data);
             }
         }
     } catch (error) {
-        throw new Error('Failed to pushReplicate data to local servers');
+        throw new Error('Не удалось отправить данные репликации на локальные серверы.');
     }
 };
 
@@ -26,10 +28,19 @@ exports.pullReplication = async () => {
             // Пропускаем центральный сервер
             if (server.STUDENT_NUMBER !== 0) { 
                 const response = await axios.get(`${server.ADDRESS}/replicate`);
-                console.log(`Data replicated to local server ${server.PORT}:`, response.data);
+                // Проверка на корректность полученных данный и последующее добавление их в бд
+                if (response && response.data && response.data.length > 0) {
+                    for (const data of response.data) {
+                        await databaseService.InsertDataIntoDB(data);
+                        logger.info(`Данные реплицируются на локальный сервер ${server.PORT}:`, data);
+                    }
+                } else {
+                    logger.warn(`Никакие данные не реплицируются с центрального сервера на локальный сервер. ${server.PORT}`);
+                }
             }
         }
     } catch (error) {
-        throw new Error('Failed to pullReplicate data to local servers');
+        logger.error('Не удалось перенести данные репликации на локальные серверы.:', error);
+        throw new Error('Не удалось перенести данные репликации на локальные серверы.');
     }
 };

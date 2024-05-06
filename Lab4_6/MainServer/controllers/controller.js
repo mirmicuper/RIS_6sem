@@ -1,25 +1,15 @@
-const generateService = require('../services/generateService');
-const monitoringService = require('../services/monitoringService');
-const replicationService = require('../services/replicationService');
 const syncTimeService = require('../services/syncTimeService')
+const logger = require('../utils/logger');
 
-
-exports.getAllUsers = async (req, res) => {
+exports.getCurrTime = async (req, res) => {
     try {
-        const newData = await generateService.generateModelData();
-        res.json(newData);
+        const dateTime = await syncTimeService.getCurrTime();
+        // Отправляем текущее время клиенту
+        res.status(200).json(dateTime);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        // Логирование ошибки
+        logger.error(`Не удалось получить текущее время: ${error.message}`);
+        // Отправка клиенту сообщения об ошибке
+        res.status(500).json({ error: 'Не удалось получить текущее время' });
     }
 };
-
-exports.replicationController = async (req, res) => {
-    try {
-        
-        res.status(201).json(newUser);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-// Добавьте другие методы контроллера

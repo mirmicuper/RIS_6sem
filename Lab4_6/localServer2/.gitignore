@@ -3,4 +3,4 @@
 .env
 /prisma/database
 /prisma/migrations
-
+/logs/logs.log

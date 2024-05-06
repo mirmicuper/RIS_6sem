@@ -7,26 +7,26 @@ const prisma = new PrismaClient();
 exports.generateModelData = async (studentNumber) => {
     try {
         // Генерация случайных данных на основе номера студента
-        const randomNumber = Math.floor(Math.random() * studentNumber);
-
         const date_time = new Date();
-        const clNum = randomNumber;
+        const clNum = Math.floor(Math.random() * 10);
+        const randomNumber = Math.floor(Math.random() * 101);
 
         // Вставка новых данных в модель
         const newData = await prisma.cl1.create({
             data: {
                 date_time,
                 studentNumber,
-                clNum
+                clNum,
+                randomNumber
             }
         });
 
-        logger.info(`Generated and added new data: ${newData.clNum}`);
+        logger.info(`Сгенерированы и добавлены новые данные: ${newData.clNum}`);
 
         return newData;
     } catch (error) {
         // Обработка ошибок при вставке данных
-        logger.error('Error generating model data:', error);
+        logger.error('Ошибка создания данных модели:', error);
         throw error;
     }
 };

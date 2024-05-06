@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:database/main_db.db"
+  url      = "file:database/local_db2.db"
 }
 
 model Cl1 {
@@ -18,4 +18,5 @@ model Cl1 {
   date_time  DateTime
   studentNumber Int
   clNum Int
+  randomNumber Int
 }

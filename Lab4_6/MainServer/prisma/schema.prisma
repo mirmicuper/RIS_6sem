@@ -18,4 +18,5 @@ model Cl1 {
   date_time  DateTime
   studentNumber Int
   clNum Int
+  randomNumber Int
 }
