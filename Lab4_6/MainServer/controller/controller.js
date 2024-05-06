@@ -1,9 +1,9 @@
-const syncTimeService = require('../services/syncTimeService')
 const logger = require('../utils/logger');
 
 exports.getCurrTime = async (req, res) => {
     try {
-        const dateTime = await syncTimeService.getCurrTime();
+        const dateTime = new Date();
+        console.log(`qweasd ${dateTime}`)
         // Отправляем текущее время клиенту
         res.status(200).json(dateTime);
     } catch (error) {

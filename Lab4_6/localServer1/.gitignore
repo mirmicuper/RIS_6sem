@@ -1,0 +1,6 @@
+.DS_Store
+/node_modules
+.env
+/prisma/database
+/prisma/migrations
+/logs/logs.log

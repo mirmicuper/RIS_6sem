@@ -11,8 +11,8 @@ const prisma = new PrismaClient();
 
 const app = express();
 
-const studentNumber = globalConfig.LOCAL_SERVER_2.STUDENT_NUMBER;
-const PORT = globalConfig.LOCAL_SERVER_2.PORT
+const studentNumber = globalConfig.LOCAL_SERVER_1.STUDENT_NUMBER;
+const PORT = globalConfig.LOCAL_SERVER_1.PORT
 
 app.use(express.json());
 

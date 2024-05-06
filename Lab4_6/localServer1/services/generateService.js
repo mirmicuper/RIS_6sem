@@ -7,10 +7,9 @@ const prisma = new PrismaClient();
 exports.generateModelData = async (studentNumber) => {
     try {
         // Генерация случайных данных на основе номера студента
-        const randomNumber = Math.floor(Math.random() * studentNumber);
-
         const date_time = new Date();
-        const clNum = randomNumber;
+        const clNum = Math.floor(Math.random() * 10);
+        const randomNumber = Math.floor(Math.random() * 101);
 
         // Вставка новых данных в модель
         const newData = await prisma.cl1.create({
