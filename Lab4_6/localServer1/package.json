@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "mainserver",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,11 +9,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^5.13.0",
     "axios": "^1.6.8",
     "express": "^4.19.2",
-    "sequelize": "^6.37.3",
-    "sequelize-cli": "^6.6.2",
     "sqlite3": "^5.1.7",
     "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.13.0"
   }
 }
