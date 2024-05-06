@@ -1,17 +1,38 @@
 const express = require('express');
-const config = require('./Config/config');
-const db = require('./database/db');
+const globalConfig = require('../config/globalConfig');
 const logger = require('./utils/logger');
-const userRoutes = require('./routes/userRoutes');
-// Подключите другие маршруты
+const router = require('./routes/router');
+const generator = require('./services/generateService')
+
+// Подключение Prisma клиента
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const app = express();
 
-app.use(express.json());
-app.use('/users', userRoutes);
-// Используйте app.use для подключения других маршрутов
+const studentNumber = globalConfig.LOCAL_SERVER_1.STUDENT_NUMBER;
 
-const PORT = config.PORT;
-app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`);
+app.use(express.json());
+
+// Подключение роутов
+app.use('/', router);
+
+setInterval(() => {
+    generator.generateModelData(studentNumber);
+    console.log('Генерация данных...');
+}, 10000);
+
+const PORT = globalConfig.MAIN_SERVER.PORT
+app.listen(PORT, async () => {
+    try {
+        // Подключение к базе данных
+        await prisma.$connect();
+        logger.info('Connected to database');
+
+        // Логика для запуска сервера
+        logger.info(`Server is running on port ${PORT}`);
+    } catch (error) {
+        logger.error('Failed to connect to database:', error);
+        process.exit(1); // Завершаем процесс с кодом ошибки
+    }
 });

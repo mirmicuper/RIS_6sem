@@ -1,20 +1,21 @@
 const generateService = require('../services/generateService');
 const monitoringService = require('../services/monitoringService');
 const replicationService = require('../services/replicationService');
-const syncTimeService = require('../services/syncTimeService');
+const syncTimeService = require('../services/syncTimeService')
+
 
 exports.getAllUsers = async (req, res) => {
     try {
-        const users = await userService.getAllUsers();
-        res.json(users);
+        const newData = await generateService.generateModelData();
+        res.json(newData);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-exports.createUser = async (req, res) => {
+exports.replicationController = async (req, res) => {
     try {
-        const newUser = await userService.createUser(req.body);
+        
         res.status(201).json(newUser);
     } catch (error) {
         res.status(500).json({ error: error.message });
