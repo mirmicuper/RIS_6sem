@@ -6,9 +6,9 @@ exports.syncTime = async (config) => {
         // Получаем время для глобального сервера 
         const serverResponse = await axios.get(`${config.MAIN_SERVER.ADDRESS}/getCurrTime`);
         
-        // Получаем разницу во времени, это и будет нашей коррекцией
-        console.log(`${serverResponse.data}`);
-        const localTime = new Date();
+        // Получаем время нашего локального сервера
+		const localTime = new Date();
+
         // Вычисляем разницу
         console.log(`${serverResponse.data} ${localTime}`)
         const diffMilliseconds = localTime - new Date(serverResponse.data);
@@ -18,6 +18,6 @@ exports.syncTime = async (config) => {
         logger.info(`Временная коррекция для сервера ${config.MAIN_SERVER.ADDRESS} => ${diffMilliseconds}`)
     } catch (error) {
         logger.error(error)
-        throw new Error('Не удалось синхронизировать время: ', error);
+        throw new Error('Не удалось синхронизировать время.');
     }
 };
