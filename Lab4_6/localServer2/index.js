@@ -5,7 +5,7 @@ const router = require('./routes/router');
 const generator = require('./services/generateService')
 const syncronator = require('./services/syncTimeService')
 
-// Подключение Prisma клиента
+// Подключение Prisma клиента //
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
