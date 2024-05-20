@@ -41,7 +41,17 @@ server.on('message', (msg, rinfo) => {
     } else if (msg.toString().includes('rank')) {
       const messageData = JSON.parse(msg);
       console.log(`Received voting data server ${messageData.serverName}`);
-
+      if (messageData.rank < globalConfig.UDP_SERVER_2.RANK) {
+        server.send("OK", messageData.serverAddress.split(':')[1], messageData.serverAddress.split(':')[0], (err) => {
+          if (err) {
+            console.error('Error sending response:', err);
+          } else {
+            console.log(`Sent response: OK to ${messageData.serverAddress}`);
+          }
+        });
+      }
+    } else if (msg.toString().includes('OK')) {
+      console.log(`Server got: OK from ${rinfo.address}:${rinfo.port}`);
     } else {
       console.log(`Server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 
@@ -83,7 +93,6 @@ server.on('listening', () => {
       if (iteration == 0) {
         findNewCoordinator();
       } else if (iteration == 3) {
-        sendVotingInfo();
       }
 
       iteration++;
@@ -180,9 +189,11 @@ async function getServersPortsStatuses() {
 
 function findNewCoordinator() {
   if (neighborServers[0].status != "open" && neighborServers[1].status != "open") {
+    //Если никто кроме текущего сервера не работает
     sendServerInfo("coordinator");
-  } else if (true) {
-
+  } else if (neighborServers[0].status == "open" || neighborServers[1].status == "open") {
+    //Если кто-то помимо текущего сервера уже работает
+    sendVotingInfo();
   } else {
 
   }
@@ -197,8 +208,9 @@ function sendVotingInfo() {
 
   const message = JSON.stringify(serverInfo);
   const openServers = neighborServers.filter(server => server.status === "open");
+  let lessThenCurrent = 0;
+  let biggerThenCurrent = 0;
 
-  // Проходим по отфильтрованным серверам
   openServers.forEach(server => {
     if (server.rank > globalConfig.UDP_SERVER_2.RANK) {
       const client = dgram.createSocket('udp4');
@@ -210,6 +222,16 @@ function sendVotingInfo() {
         }
         client.close();
       });
+      biggerThenCurrent++
+    } else if (server.rank < globalConfig.UDP_SERVER_2.RANK) {
+      lessThenCurrent++;
     }
   });
+
+  if (biggerThenCurrent == lessThenCurrent || lessThenCurrent < biggerThenCurrent) {
+    console.log("lose launch voting");
+  } else if (lessThenCurrent > biggerThenCurrent) {
+    sendServerInfo("coordinator");
+    console.log("win launch voting");
+  }
 }

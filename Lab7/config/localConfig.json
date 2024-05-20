@@ -1,5 +1,5 @@
 {
-  "coordinator": "localhost:6005",
+  "coordinator": "localhost:3333",
   "serverList": [
     {
       "UDPServer1": "localhost:6005",
