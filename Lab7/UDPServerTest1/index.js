@@ -38,7 +38,7 @@ server.on('message', (msg, rinfo) => {
           // console.log(`Sent response: good`);
         }
       });
-    } else if (msg.toString().includes('rank')) {
+    } else if (msg.toString().includes('rank') && !msg.toString().includes('new')) {
       const messageData = JSON.parse(msg);
       console.log(`Received voting data server ${messageData.serverName}`);
       if (messageData.rank < globalConfig.UDP_SERVER_2.RANK) {
@@ -52,6 +52,16 @@ server.on('message', (msg, rinfo) => {
       }
     } else if (msg.toString().includes('OK')) {
       console.log(`Server got: OK from ${rinfo.address}:${rinfo.port}`);
+    } else if (msg.toString().includes('new')) {
+      const messageData = JSON.parse(msg);
+      console.log(`Server got new coordinator info from ${messageData.serverHost}:${messageData.serverPort}`);
+      const coordinator = neighborServers.find(server => server.rank === messageData.rank);
+      const notCoordinator = neighborServers.find(server => server.rank != messageData.rank);
+      coordinator.isCoordinator = true;
+      notCoordinator.isCoordinator = false;
+
+      console.log(neighborServers[1].isCoordinator);
+      
     } else {
       console.log(`Server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 
@@ -76,6 +86,7 @@ server.on('message', (msg, rinfo) => {
 
 server.on('listening', () => {
   let iteration = 0;
+  let pizdecSluchilsya = 0;
   const address = server.address();
   console.log(`Server listening on ${address.address}:${address.port}`);
   sendServerInfo("start");
@@ -90,9 +101,23 @@ server.on('listening', () => {
         server.status = statuses[`${server.ip}:${server.port}`];
       });
 
+      //Логика на случай смерти координатора
+      const coordinator = neighborServers.find(server => server.isCoordinator == true);
+      if (coordinator) {
+        if (coordinator.status != 'open') {
+          pizdecSluchilsya++
+        }
+      }
+
+      if (pizdecSluchilsya == 3) {
+        console.log("coordinator is dead");
+        coordinator.isCoordinator = false;
+        pizdecSluchilsya = 0;
+        findNewCoordinator();
+      }
+
       if (iteration == 0) {
         findNewCoordinator();
-      } else if (iteration == 3) {
       }
 
       iteration++;
@@ -102,7 +127,6 @@ server.on('listening', () => {
     }
   }, 5000); // каждые 5 секунд
 });
-
 process.on('SIGINT', () => {
   // console.log('Received SIGINT signal');
   // Выполните здесь необходимые действия перед завершением работы сервера
@@ -231,7 +255,32 @@ function sendVotingInfo() {
   if (biggerThenCurrent == lessThenCurrent || lessThenCurrent < biggerThenCurrent) {
     console.log("lose launch voting");
   } else if (lessThenCurrent > biggerThenCurrent) {
+    setNewCoordinator();
     sendServerInfo("coordinator");
     console.log("win launch voting");
   }
+}
+
+function setNewCoordinator() {
+  const serverInfo = {
+    message: "I am new coordinator",
+    serverHost: globalConfig.UDP_SERVER_2.SERVER_IP,
+    serverPort: globalConfig.UDP_SERVER_2.PORT,
+    rank: globalConfig.UDP_SERVER_2.RANK
+  };
+
+  const message = JSON.stringify(serverInfo);
+  const openServers = neighborServers.filter(server => server.status === "open");
+
+  openServers.forEach(server => {
+    const client = dgram.createSocket('udp4');
+    client.send(message, 0, message.length, server.port, server.ip, (err) => {
+      if (err) {
+        console.error('Error sending server info:', err);
+      } else {
+        console.log(`Server info sent to server: ${server.ip}:${server.port}`);
+      }
+      client.close();
+    });
+  })
 }

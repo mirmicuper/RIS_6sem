@@ -1,13 +1,13 @@
 {
-  "coordinator": "localhost:3333",
+  "coordinator": "localhost:2222",
   "serverList": [
     {
       "UDPServer1": "localhost:6005",
-      "status": "inActive"
+      "status": "Active"
     },
     {
       "UDPServer2": "localhost:5556",
-      "status": "inActive"
+      "status": "Active"
     },
     {
       "UDPServer3": "localhost:5557",
