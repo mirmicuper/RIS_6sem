@@ -7,11 +7,15 @@ const { getSystemTime } = require('./controllers/timeService');
 const neighborServers = [
   {
     ip: globalConfig.UDP_SERVER_2.SERVER_IP,
-    port: globalConfig.UDP_SERVER_2.PORT
+    port: globalConfig.UDP_SERVER_2.PORT,
+    status: "unknown",
+    isCoordinator: false
   },
   {
     ip: globalConfig.UDP_SERVER_1.SERVER_IP,
-    port: globalConfig.UDP_SERVER_1.PORT
+    port: globalConfig.UDP_SERVER_1.PORT,
+    status: "unknown",
+    isCoordinator: false
   }
 ];
 
@@ -23,40 +27,62 @@ server.on('error', (err) => {
 });
 
 server.on('message', (msg, rinfo) => {
-  console.log(`Server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
-
-  // Получаем системное время
-  const date = new Date();
-  const formattedDateTime = getSystemTime(date);
-
-  // Отправляем ответ клиенту
-  server.send(formattedDateTime, rinfo.port, rinfo.address, (err) => {
-    if (err) {
-      console.error('Error sending response:', err);
+  try {
+    if (msg.toString().includes('check')) {
+      server.send("good", rinfo.port, rinfo.address, (err) => {
+        if (err) {
+          console.error('Error sending response:', err);
+        } else {
+          // console.log(`Sent response: good`);
+        }
+      });
     } else {
-      console.log(`Sent response: ${formattedDateTime}`);
-      console.log(`-------------------------------------------`);
+      console.log(`Server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+
+      // Получаем системное время
+      const date = new Date();
+      const formattedDateTime = getSystemTime(date);
+
+      // Отправляем ответ клиенту
+      server.send(formattedDateTime, rinfo.port, rinfo.address, (err) => {
+        if (err) {
+          console.error('Error sending response:', err);
+        } else {
+          console.log(`Sent response: ${formattedDateTime}`);
+          console.log(`-------------------------------------------`);
+        }
+      });
     }
-  });
+  } catch (error) {
+    console.log(error.message);
+  }
 });
 
 server.on('listening', () => {
+  let iteration = 0;
   const address = server.address();
   console.log(`Server listening on ${address.address}:${address.port}`);
   sendServerInfo("start");
 
-  getServersPortsStatuses()
-    .then(statuses => {
+  setInterval(async () => {
+    try {
+      const statuses = await getServersPortsStatuses();
       console.log('Статусы соседних серверов:');
       console.log(statuses);
-      const statusValues = Object.values(statuses);
-      if (!statusValues.includes('open')) {
-        sendServerInfo("newCoordinator");
+
+      neighborServers.forEach(server => {
+        server.status = statuses[`${server.ip}:${server.port}`];
+      });
+
+      if(iteration == 0){
+        findNewCoordinator();
+        iteration++;
       }
-    })
-    .catch(error => {
+
+    } catch (error) {
       console.error('Ошибка при получении статусов портов:', error);
-    });
+    }
+  }, 5000); // каждые 5 секунд
 });
 
 process.on('SIGINT', () => {
@@ -123,11 +149,9 @@ async function checkPortStatus(server) {
     });
 
     // Отправляем пустое сообщение на порт сервера
-    socket.send('', 0, 0, server.port, server.ip);
+    socket.send('checkStatus', 0, 10, server.port, server.ip);
   });
 }
-
-
 
 async function getServersPortsStatuses() {
   const statuses = {};
@@ -143,4 +167,14 @@ async function getServersPortsStatuses() {
   }
 
   return statuses;
+}
+
+function findNewCoordinator() {
+  if (neighborServers[0].status != "open" && neighborServers[1].status != "open") {
+    sendServerInfo("coordinator");
+  } else if (true) {
+
+  } else {
+
+  }
 }

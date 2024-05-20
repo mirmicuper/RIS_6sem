@@ -33,25 +33,24 @@ client.on('message', (response, serverInfo) => {
 });
 
 server.on('message', (msg, rinfo) => {
-
   try {
-
     if (msg.toString().includes("start")) {
       const messageData = JSON.parse(msg);
-      console.log(`Received start message from time server ${messageData.serverName}`);
+      console.log(`Received start status from server ${messageData.serverName}`);
       updateServerStatus(messageData.serverName, "Active")
 
     } else if (msg.toString().includes("stop")) {
       const messageData = JSON.parse(msg);
-      console.log(`Received stop message from time server ${messageData.serverName}`);
+      console.log(`Received stop status from server ${messageData.serverName}`);
       updateServerStatus(messageData.serverName, "inActive")
 
-    } else if (msg.toString().includes("newCoordinator")) {
+    } else if (msg.toString().includes("coordinator")) {
       const messageData = JSON.parse(msg);
-      console.log(`Received new coordinator status message from time server ${messageData.serverName}`);
+      console.log(`Received coordinator status from server ${messageData.serverName}`);
       updateCoordinatorInfo(messageData.serverAddress);
-      
+
     } else {
+      console.log(`-------------------------------------------`);
       console.log(`Agent server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
       pendingResponses.push({ rinfo, msg });
       getCoordinatorInfo((coordinator) => {
