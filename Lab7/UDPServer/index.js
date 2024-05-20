@@ -1,7 +1,19 @@
 const dgram = require('dgram');
+const ping = require('ping');
 const server = dgram.createSocket('udp4');
 const globalConfig = require('../config/globalConfig');
 const { getSystemTime } = require('./controllers/timeService');
+
+const neighborServers = [
+  {
+    ip: globalConfig.UDP_SERVER_2.SERVER_IP,
+    port: globalConfig.UDP_SERVER_2.PORT
+  },
+  {
+    ip: globalConfig.UDP_SERVER_3.SERVER_IP,
+    port: globalConfig.UDP_SERVER_3.PORT
+  }
+];
 
 const PORT = globalConfig.UDP_SERVER_1.PORT;
 
@@ -32,6 +44,19 @@ server.on('listening', () => {
   const address = server.address();
   console.log(`Server listening on ${address.address}:${address.port}`);
   sendServerInfo("start");
+
+  getServersPortsStatuses()
+    .then(statuses => {
+      console.log('Статусы соседних серверов:');
+      console.log(statuses);
+      const statusValues = Object.values(statuses);
+      if (!statusValues.includes('open')) {
+        sendServerInfo("newCoordinator");
+      }
+    })
+    .catch(error => {
+      console.error('Ошибка при получении статусов портов:', error);
+    });
 });
 
 process.on('SIGINT', () => {
@@ -68,4 +93,52 @@ function sendServerInfo(action) {
       client.close();
     }
   });
+}
+
+async function checkPortStatus(server) {
+  return new Promise((resolve) => {
+    const socket = dgram.createSocket('udp4');
+
+    let timer; // Таймер ожидания ответа
+
+    // Устанавливаем таймер ожидания
+    timer = setTimeout(() => {
+      socket.close();
+      resolve('closed');
+    }, 2000); // Ожидаем ответ не более 2 секунд
+
+    socket.once('error', (error) => {
+      clearTimeout(timer); // Очищаем таймер
+      if (error.code === 'ECONNREFUSED') {
+        resolve('closed');
+      } else {
+        resolve('unknown');
+      }
+    });
+
+    socket.once('message', () => {
+      clearTimeout(timer); // Очищаем таймер
+      socket.close();
+      resolve('open');
+    });
+
+    // Отправляем пустое сообщение на порт сервера
+    socket.send('', 0, 0, server.port, server.ip);
+  });
+}
+
+async function getServersPortsStatuses() {
+  const statuses = {};
+
+  for (const server of neighborServers) {
+    try {
+      const status = await checkPortStatus(server);
+      statuses[`${server.ip}:${server.port}`] = status;
+    } catch (error) {
+      console.error(`Ошибка при проверке порта ${server.port} на сервере ${server.ip}: ${error.message}`);
+      statuses[`${server.ip}:${server.port}`] = 'unknown';
+    }
+  }
+
+  return statuses;
 }

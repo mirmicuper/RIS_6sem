@@ -3,11 +3,9 @@ const fs = require('fs');
 const client = dgram.createSocket('udp4');
 const server = dgram.createSocket('udp4');
 const globalConfig = require('../config/globalConfig');
-
 const localConfigPath = '../config/localConfig.json';
 
-let MAIN_SERVER_PORT = ""; // Порт основного UDP сервера
-let MAIN_SERVER_HOST = ""; // Хост основного UDP сервера
+const pendingResponses = []; // Очередь для хранения запросов
 
 const MIDDLE_SERVER_PORT = globalConfig.UDP_SERVER_AGENT.PORT;
 const MIDDLE_SERVER_HOST = globalConfig.UDP_SERVER_AGENT.SERVER_IP;
@@ -34,8 +32,6 @@ client.on('message', (response, serverInfo) => {
   }
 });
 
-const pendingResponses = []; // Очередь для хранения запросов
-
 server.on('message', (msg, rinfo) => {
 
   try {
@@ -50,6 +46,11 @@ server.on('message', (msg, rinfo) => {
       console.log(`Received stop message from time server ${messageData.serverName}`);
       updateServerStatus(messageData.serverName, "inActive")
 
+    } else if (msg.toString().includes("newCoordinator")) {
+      const messageData = JSON.parse(msg);
+      console.log(`Received new coordinator status message from time server ${messageData.serverName}`);
+      updateCoordinatorInfo(messageData.serverAddress);
+      
     } else {
       console.log(`Agent server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
       pendingResponses.push({ rinfo, msg });
@@ -80,19 +81,15 @@ server.on('listening', () => {
 
 server.bind(MIDDLE_SERVER_PORT);
 
-function updateCoordinatorInfo() {
+function updateCoordinatorInfo(coordinatorData) {
   fs.readFile(localConfigPath, 'utf8', (err, data) => {
     try {
-      // Преобразуем считанные данные в объект
       const jsonData = JSON.parse(data);
 
-      // Меняем определённые поля объектов или массива
-      jsonData.coordinator = `${globalConfig.UDP_SERVER_1.SERVER_IP}:${globalConfig.UDP_SERVER_1.PORT}`;
+      jsonData.coordinator = coordinatorData;
 
-      // Преобразуем обновлённые данные в формат JSON
       const updatedData = JSON.stringify(jsonData, null, 2);
 
-      // Записываем обновлённые данные обратно в файл
       fs.writeFile(localConfigPath, updatedData, (err) => {
         if (err) {
           console.error('Ошибка при записи в файл:', err);
@@ -124,7 +121,7 @@ function getCoordinatorInfo(callback) {
   });
 }
 
-function updateServerStatus(serverName, newStatus, host) {
+function updateServerStatus(serverName, newStatus) {
   fs.readFile(localConfigPath, 'utf8', (err, data) => {
     try {
       // Преобразуем считанные данные в объект

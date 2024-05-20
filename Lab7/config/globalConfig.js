@@ -5,7 +5,7 @@ const UDP_SERVER_AGENT_IP = "localhost";
 
 const globalConfig = {
   UDP_SERVER_1: {
-    PORT: 6000,
+    PORT: 6005,
     RANK: 1,
     SERVER_IP: UDP_SERVER_1_IP,
   },
