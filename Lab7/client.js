@@ -10,7 +10,7 @@ client.on('message', (msg, rinfo) => {
   client.close();
 });
 
-const message = Buffer.from('What is the current time?');
+const message = Buffer.from('What is the current system time?');
 
 client.send(message, 0, message.length, PORT, HOST, (err) => {
   if (err) {
