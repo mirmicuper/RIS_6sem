@@ -3,11 +3,11 @@
   "serverList": [
     {
       "UDPServer1": "localhost:6005",
-      "status": "Active"
+      "status": "inActive"
     },
     {
       "UDPServer2": "localhost:5556",
-      "status": "Active"
+      "status": "inActive"
     },
     {
       "UDPServer3": "localhost:5557",
