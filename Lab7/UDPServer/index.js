@@ -9,13 +9,15 @@ const neighborServers = [
     ip: globalConfig.UDP_SERVER_2.SERVER_IP,
     port: globalConfig.UDP_SERVER_2.PORT,
     status: "unknown",
-    isCoordinator: false
+    isCoordinator: false,
+    rank: 2
   },
   {
     ip: globalConfig.UDP_SERVER_3.SERVER_IP,
     port: globalConfig.UDP_SERVER_3.PORT,
     status: "unknown",
-    isCoordinator: false
+    isCoordinator: false,
+    rank: 3
   }
 ];
 
@@ -36,6 +38,10 @@ server.on('message', (msg, rinfo) => {
           // console.log(`Sent response: good`);
         }
       });
+    } else if (msg.toString().includes('rank')) {
+      const messageData = JSON.parse(msg);
+      console.log(`Received voting data server ${messageData.serverName}`);
+
     } else {
       console.log(`Server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 
@@ -67,17 +73,20 @@ server.on('listening', () => {
   setInterval(async () => {
     try {
       const statuses = await getServersPortsStatuses();
-      console.log('Статусы соседних серверов:');
-      console.log(statuses);
+      // console.log('Статусы соседних серверов:');
+      // console.log(statuses);
 
       neighborServers.forEach(server => {
         server.status = statuses[`${server.ip}:${server.port}`];
       });
 
-      if(iteration == 0){
+      if (iteration == 0) {
         findNewCoordinator();
-        iteration++;
+      } else if (iteration == 3) {
+        sendVotingInfo();
       }
+
+      iteration++;
 
     } catch (error) {
       console.error('Ошибка при получении статусов портов:', error);
@@ -86,7 +95,7 @@ server.on('listening', () => {
 });
 
 process.on('SIGINT', () => {
-  console.log('Received SIGINT signal');
+  // console.log('Received SIGINT signal');
   // Выполните здесь необходимые действия перед завершением работы сервера
   // Например, отправьте сообщение о завершении работы на сервер-посредник
   sendServerInfo("stop");
@@ -177,4 +186,30 @@ function findNewCoordinator() {
   } else {
 
   }
+}
+
+function sendVotingInfo() {
+  const serverInfo = {
+    serverName: "UDPServer1",
+    serverAddress: `${globalConfig.UDP_SERVER_1.SERVER_IP}:${globalConfig.UDP_SERVER_1.PORT}`,
+    rank: globalConfig.UDP_SERVER_1.RANK
+  };
+
+  const message = JSON.stringify(serverInfo);
+  const openServers = neighborServers.filter(server => server.status === "open");
+
+  // Проходим по отфильтрованным серверам
+  openServers.forEach(server => {
+    if (server.rank > globalConfig.UDP_SERVER_1.RANK) {
+      const client = dgram.createSocket('udp4');
+      client.send(message, 0, message.length, server.port, server.ip, (err) => {
+        if (err) {
+          console.error('Error sending server info:', err);
+        } else {
+          console.log(`Server info sent to server: ${server.ip}:${server.port}`);
+        }
+        client.close();
+      });
+    }
+  });
 }
