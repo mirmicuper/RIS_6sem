@@ -47,6 +47,7 @@ server.on('message', (msg, rinfo) => {
     } else if (msg.toString().includes("coordinator")) {
       const messageData = JSON.parse(msg);
       console.log(`Received coordinator status from server ${messageData.serverName}`);
+      console.log(messageData.serverAddress)
       updateCoordinatorInfo(messageData.serverAddress);
 
     } else {

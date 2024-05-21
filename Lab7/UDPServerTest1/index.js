@@ -1,5 +1,4 @@
 const dgram = require('dgram');
-const ping = require('ping');
 const server = dgram.createSocket('udp4');
 const globalConfig = require('../config/globalConfig');
 const { getSystemTime } = require('./controllers/timeService');
@@ -61,7 +60,7 @@ server.on('message', (msg, rinfo) => {
       notCoordinator.isCoordinator = false;
 
       console.log(neighborServers[1].isCoordinator);
-      
+
     } else {
       console.log(`Server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 
@@ -127,6 +126,7 @@ server.on('listening', () => {
     }
   }, 5000); // каждые 5 секунд
 });
+
 process.on('SIGINT', () => {
   // console.log('Received SIGINT signal');
   // Выполните здесь необходимые действия перед завершением работы сервера
@@ -234,9 +234,13 @@ function sendVotingInfo() {
   const openServers = neighborServers.filter(server => server.status === "open");
   let lessThenCurrent = 0;
   let biggerThenCurrent = 0;
+  let highOpenRank = 0;
 
   openServers.forEach(server => {
     if (server.rank > globalConfig.UDP_SERVER_2.RANK) {
+      if (server.rank > highOpenRank) {
+        highOpenRank = server.rank;
+      }
       const client = dgram.createSocket('udp4');
       client.send(message, 0, message.length, server.port, server.ip, (err) => {
         if (err) {
@@ -254,6 +258,8 @@ function sendVotingInfo() {
 
   if (biggerThenCurrent == lessThenCurrent || lessThenCurrent < biggerThenCurrent) {
     console.log("lose launch voting");
+    const coordinator = neighborServers.find(server => server.rank === highOpenRank);
+    coordinator.isCoordinator = true;
   } else if (lessThenCurrent > biggerThenCurrent) {
     setNewCoordinator();
     sendServerInfo("coordinator");

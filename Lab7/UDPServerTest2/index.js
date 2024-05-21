@@ -1,5 +1,4 @@
 const dgram = require('dgram');
-const ping = require('ping');
 const server = dgram.createSocket('udp4');
 const globalConfig = require('../config/globalConfig');
 const { getSystemTime } = require('./controllers/timeService');
@@ -189,7 +188,7 @@ async function checkPortStatus(server) {
       resolve('open');
     });
 
-    // Отправляем пустое сообщение на порт сервера
+    // Отправляем сообщение на порт сервера
     socket.send('checkStatus', 0, 10, server.port, server.ip);
   });
 }
@@ -233,9 +232,13 @@ function sendVotingInfo() {
   const openServers = neighborServers.filter(server => server.status === "open");
   let lessThenCurrent = 0;
   let biggerThenCurrent = 0;
+  let highOpenRank = 0;
 
   openServers.forEach(server => {
     if (server.rank > globalConfig.UDP_SERVER_3.RANK) {
+      if (server.rank > highOpenRank) {
+        highOpenRank = server.rank;
+      }
       const client = dgram.createSocket('udp4');
       client.send(message, 0, message.length, server.port, server.ip, (err) => {
         if (err) {
@@ -253,6 +256,8 @@ function sendVotingInfo() {
 
   if (biggerThenCurrent == lessThenCurrent || lessThenCurrent < biggerThenCurrent) {
     console.log("lose launch voting");
+    const coordinator = neighborServers.find(server => server.rank === highOpenRank);
+    coordinator.isCoordinator = true;
   } else if (lessThenCurrent > biggerThenCurrent) {
     setNewCoordinator();
     sendServerInfo("coordinator");
