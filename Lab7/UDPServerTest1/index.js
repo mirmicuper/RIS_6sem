@@ -59,8 +59,6 @@ server.on('message', (msg, rinfo) => {
       coordinator.isCoordinator = true;
       notCoordinator.isCoordinator = false;
 
-      console.log(neighborServers[1].isCoordinator);
-
     } else {
       console.log(`Server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 
