@@ -1,26 +1,26 @@
-const UDP_SERVER_1_IP = "localhost";
-const UDP_SERVER_2_IP = "localhost";
-const UDP_SERVER_3_IP = "localhost";
-const UDP_SERVER_AGENT_IP = "localhost";
+const UDP_SERVER_1_IP = "192.168.43.159";
+const UDP_SERVER_2_IP = "192.168.43.141";
+const UDP_SERVER_3_IP = "192.168.43.249";
+const UDP_SERVER_AGENT_IP = "192.168.43.249";
 
 const globalConfig = {
   UDP_SERVER_1: {
-    PORT: 1111,
+    PORT: 5555,
     RANK: 1,
     SERVER_IP: UDP_SERVER_1_IP,
   },
   UDP_SERVER_2: {
-    PORT: 2222,
+    PORT: 5555,
     RANK: 2,
     SERVER_IP: UDP_SERVER_2_IP,
   },
   UDP_SERVER_3: {
-    PORT: 3333,
+    PORT: 5555,
     RANK: 3,
     SERVER_IP: UDP_SERVER_3_IP,
   },
   UDP_SERVER_AGENT: {
-    PORT: 5555,
+    PORT: 5550,
     SERVER_IP: UDP_SERVER_AGENT_IP,
   },
 };

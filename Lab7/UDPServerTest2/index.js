@@ -2,6 +2,7 @@ const dgram = require('dgram');
 const server = dgram.createSocket('udp4');
 const globalConfig = require('../config/globalConfig');
 const { getSystemTime } = require('./controllers/timeService');
+let pizdecSluchilsya = 0;
 
 const neighborServers = [
   {
@@ -40,15 +41,19 @@ server.on('message', (msg, rinfo) => {
     } else if (msg.toString().includes('rank') && !msg.toString().includes('new')) {
       const messageData = JSON.parse(msg);
       console.log(`Received voting data server ${messageData.serverName}`);
-      if (messageData.rank < globalConfig.UDP_SERVER_3.RANK) {
-        server.send("OK", messageData.serverAddress.split(':')[1], messageData.serverAddress.split(':')[0], (err) => {
-          if (err) {
-            console.error('Error sending response:', err);
-          } else {
-            console.log(`Sent response: OK to ${messageData.serverAddress}`);
-          }
-        });
-      }
+      server.send("OK", messageData.serverAddress.split(':')[1], messageData.serverAddress.split(':')[0], (err) => {
+        if (err) {
+          console.error('Error sending response:', err);
+        } else {
+          console.log(`Sent response: OK to ${messageData.serverAddress}`);
+        }
+      });
+      const coordinator = neighborServers.find(server => server.isCoordinator == true);
+      coordinator.isCoordinator = false;
+
+      findNewCoordinator();
+      pizdecSluchilsya = 0;
+
     } else if (msg.toString().includes('OK')) {
       console.log(`Server got: OK from ${rinfo.address}:${rinfo.port}`);
     } else if (msg.toString().includes('new')) {
@@ -83,7 +88,6 @@ server.on('message', (msg, rinfo) => {
 
 server.on('listening', () => {
   let iteration = 0;
-  let pizdecSluchilsya = 0;
   const address = server.address();
   console.log(`Server listening on ${address.address}:${address.port}`);
   sendServerInfo("start");
